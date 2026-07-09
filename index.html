@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obra de Ángel Rojas Martínez — catálogo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root{--bg:#F1EFE8;--card:#ffffff;--border:#D3D1C7;--text:#2C2C2A;--muted:#5F5E5A;}
+*{box-sizing:border-box;}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:24px;}
+h1{font-size:20px;font-weight:600;margin:0 0 4px;}
+.sub{color:var(--muted);font-size:13px;margin:0 0 18px;}
+.controls{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+input,select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:#fff;}
+input{flex:1;min-width:160px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .1s;}
+.card:hover{transform:translateY(-2px);}
+.thumb{aspect-ratio:4/5;background:#e3e1d8;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.thumb img{width:100%;height:100%;object-fit:cover;}
+.thumb .ph{color:#aaa9a0;font-size:12px;text-align:center;padding:8px;}
+.info{padding:8px 10px;}
+.info .a{font-size:11px;color:var(--muted);margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.info .t{font-size:13px;font-weight:600;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.info .s{font-size:12px;color:var(--muted);margin:0;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:10;}
+.modal{background:#fff;border-radius:12px;max-width:540px;width:100%;max-height:90vh;overflow:auto;padding:18px;}
+.modal img{width:100%;border-radius:8px;margin-bottom:12px;background:#e3e1d8;aspect-ratio:4/3;object-fit:contain;}
+.modal table{width:100%;font-size:13px;border-collapse:collapse;}
+.modal td{padding:4px 0;vertical-align:top;}
+.modal td.k{color:var(--muted);width:40%;padding-right:8px;}
+.modalhead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+button{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;}
+button:hover{background:#f5f3ec;}
+.navrow{display:flex;justify-content:space-between;margin-top:14px;}
+.count{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.thumbs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px;}
+.thumbs img{height:54px;border-radius:6px;border:2px solid transparent;cursor:pointer;object-fit:cover;flex-shrink:0;}
+.thumbs img:hover{border-color:var(--border);}
+.thumbs img.active{border-color:#888;}
+.badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;}
+.badge.malo{background:#fde8e8;color:#c0392b;}
+.badge.leve{background:#fef3cd;color:#856404;}
+.notas-row td{background:#fffbf0;padding:6px 8px!important;font-style:italic;}
+</style>
+</head>
+<body>
+<h1>Obra de Ángel Rojas Martínez</h1>
+<p class="sub" id="status">Cargando catálogo...</p>
+<div class="controls">
+  <input id="search" placeholder="Buscar por título, código...">
+  <select id="filtroTec"><option value="">Toda técnica</option></select>
+  <select id="filtroEst"><option value="">Todo estado</option></select>
+</div>
+<p class="count" id="count"></p>
+<div class="grid" id="grid"></div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)cerrar()">
+<div class="modal">
+  <div class="modalhead">
+    <div>
+      <p style="font-weight:600;font-size:16px;margin:0;" id="mTitulo"></p>
+      <p style="font-size:13px;color:#5F5E5A;margin:2px 0 0;" id="mSub"></p>
+      <p style="font-size:12px;color:#5F5E5A;margin:2px 0 0;" id="mAutor"></p>
+    </div>
+    <button onclick="cerrar()">✕ Cerrar</button>
+  </div>
+  <img id="mImg" style="display:none">
+  <div id="mThumbs" class="thumbs"></div>
+  <table>
+    <tr><td class="k">Código</td><td id="mCodigo"></td></tr>
+    <tr><td class="k">Medidas obra</td><td id="mDim"></td></tr>
+    <tr id="rowMarco"><td class="k">Con marco</td><td id="mMarco"></td></tr>
+    <tr id="rowDimMarco" style="display:none"><td class="k">Medidas con marco</td><td id="mDimMarco"></td></tr>
+    <tr><td class="k">Técnica</td><td id="mTecnica"></td></tr>
+    <tr><td class="k">Firma</td><td id="mFirma"></td></tr>
+    <tr><td class="k">Estado</td><td id="mEstado"></td></tr>
+    <tr><td class="k">Ubicación</td><td id="mUbic"></td></tr>
+    <tr id="rowExpo" style="display:none"><td class="k">Catálogo expo</td><td id="mExpo"></td></tr>
+    <tr id="rowNotas" class="notas-row" style="display:none"><td class="k">Notas</td><td id="mNotas"></td></tr>
+  </table>
+  <div class="navrow">
+    <button onclick="nav(-1)">← Anterior</button>
+    <button onclick="nav(1)">Siguiente →</button>
+  </div>
+</div>
+</div>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdDTYEmTuAbolkxeAFPJMoYq69MK2FbGWyl_PbAZ4DeWynCqPghy9155GoHgDB2oLPs_c2_W312XQC/pub?gid=256991798&single=true&output=csv";
+let data = [], visible = [], cur = 0;
+
+function pad(n){return String(parseInt(n)||0).padStart(4,'0');}
+function dim(a,b,p){let d=[a,b].filter(Boolean).join(' x ');if(d)d+=' cm';if(p)d+=` (prof. ${p} cm)`;return d;}
+
+async function init(){
+  let manifest={};
+  try{manifest=await fetch('fotos_manifest.json').then(r=>r.json());}catch(e){}
+
+  Papa.parse(CSV_URL,{
+    download:true, header:true, skipEmptyLines:true,
+    complete:function(res){
+      data=res.data.filter(r=>r['Codigo']||r['Código']).map(row=>{
+        const codigo=pad(row['Codigo']||row['Código']);
+        const fotos=(manifest[codigo]||[]).map(f=>'fotos_web/'+f);
+        const cover=fotos.find(f=>f.includes('frontal'))||fotos[0]||null;
+        return{codigo,autor:row['Autor']||'',titulo:row['Título']||row['Titulo']||'Sin título',
+          anio:row['Año']||row['Ano']||'',tecnica:row['Técnica / soporte']||row['Tecnica / soporte']||'',
+          dim:dim(row['Alto obra (cm)'],row['Ancho obra (cm)'],row['Prof. obra (cm)']),
+          dimMarco:dim(row['Alto con marco (cm)'],row['Ancho con marco (cm)'],row['Prof. con marco (cm)']),
+          marco:row['Con marco']||'',firma:row['Firma y fecha']||'',
+          estado:row['Estado de conservación']||row['Estado de conservacion']||'',
+          ubicacion:row['Ubicación actual']||row['Ubicacion actual']||'',
+          expo:row['Catálogo expo relacionado']||'',notas:row['Notas']||'',cover,fotos};
+      });
+      poblarFiltros();
+      document.getElementById('status').textContent='';
+      render();
+    },
+    error:function(){document.getElementById('status').textContent='Error cargando el catálogo.';}
+  });
+}
+
+function poblarFiltros(){
+  ['filtroTec','filtroEst'].forEach((id,i)=>{
+    const vals=[...new Set(data.map(d=>i===0?d.tecnica:d.estado).filter(Boolean))].sort();
+    const sel=document.getElementById(id);
+    vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+  });
+}
+
+function render(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const f=document.getElementById('filtroTec').value;
+  const e=document.getElementById('filtroEst').value;
+  visible=data.filter(d=>
+    (!q||d.titulo.toLowerCase().includes(q)||d.codigo.includes(q)||d.notas.toLowerCase().includes(q))&&
+    (!f||d.tecnica===f)&&(!e||d.estado===e));
+  document.getElementById('count').textContent=visible.length+' obra(s)';
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  visible.forEach((d,i)=>{
+    const c=document.createElement('div');c.className='card';c.onclick=()=>abrir(i);
+    const badge=d.estado==='Necesita restauración'?'<span class="badge malo">Restaurar</span>':
+      d.estado==='Leve deterioro'?'<span class="badge leve">Leve deterioro</span>':'';
+    const thumb=d.cover?`<img src="${d.cover}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=ph>Sin foto<br>#${d.codigo}</div>'">`:`<div class="ph">Sin foto<br>#${d.codigo}</div>`;
+    c.innerHTML=`<div class="thumb">${thumb}</div><div class="info">${d.autor?`<p class="a">${d.autor}</p>`:''}<p class="t">${d.titulo}</p><p class="s">${d.anio||''}${d.tecnica?' · '+d.tecnica:''}${badge}</p></div>`;
+    grid.appendChild(c);
+  });
+}
+
+function abrir(i){
+  cur=i;const d=visible[i];
+  document.getElementById('overlay').style.display='flex';
+  document.getElementById('mTitulo').textContent=d.titulo;
+  document.getElementById('mSub').textContent=(d.anio||'')+(d.tecnica?' · '+d.tecnica:'');
+  document.getElementById('mAutor').textContent=d.autor||'';
+  document.getElementById('mCodigo').textContent='#'+d.codigo;
+  document.getElementById('mDim').textContent=d.dim||'—';
+  document.getElementById('mTecnica').textContent=d.tecnica||'—';
+  document.getElementById('mMarco').textContent=d.marco||'—';
+  document.getElementById('mFirma').textContent=d.firma||'—';
+  document.getElementById('mEstado').textContent=d.estado||'—';
+  document.getElementById('mUbic').textContent=d.ubicacion||'—';
+  const rdm=document.getElementById('rowDimMarco');
+  if(d.dimMarco){document.getElementById('mDimMarco').textContent=d.dimMarco;rdm.style.display='';}else rdm.style.display='none';
+  const re=document.getElementById('rowExpo');
+  if(d.expo){document.getElementById('mExpo').textContent=d.expo;re.style.display='';}else re.style.display='none';
+  const rn=document.getElementById('rowNotas');
+  if(d.notas){document.getElementById('mNotas').textContent=d.notas;rn.style.display='';}else rn.style.display='none';
+  const th=document.getElementById('mThumbs');th.innerHTML='';
+  const mImg=document.getElementById('mImg');
+  if(d.cover){mImg.src=d.cover;mImg.style.display='block';}else mImg.style.display='none';
+  d.fotos.forEach((f,fi)=>{
+    const im=document.createElement('img');im.src=f;
+    if(fi===0)im.classList.add('active');
+    im.onclick=()=>{mImg.src=f;mImg.style.display='block';th.querySelectorAll('img').forEach(x=>x.classList.remove('active'));im.classList.add('active');};
+    th.appendChild(im);
+  });
+}
+
+function cerrar(){document.getElementById('overlay').style.display='none';}
+function nav(dir){abrir((cur+dir+visible.length)%visible.length);}
+
+document.getElementById('search').addEventListener('input',render);
+document.getElementById('filtroTec').addEventListener('change',render);
+document.getElementById('filtroEst').addEventListener('change',render);
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('overlay').style.display==='flex'){
+    if(e.key==='Escape')cerrar();
+    if(e.key==='ArrowRight')nav(1);
+    if(e.key==='ArrowLeft')nav(-1);
+  }
+});
+
+init();
+</script>
+</body>
+</html>

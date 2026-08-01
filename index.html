@@ -68,6 +68,13 @@ button.close-btn:hover{background:#f5f3ec;}
   <input id="search" placeholder="Buscar por título, código...">
   <select id="filtroTec"><option value="">Toda técnica</option></select>
   <select id="filtroEst"><option value="">Todo estado</option></select>
+  <select id="orden">
+    <option value="codigo">Ordenar: Código</option>
+    <option value="fecha_asc">Fecha: más antiguo primero</option>
+    <option value="fecha_desc">Fecha: más reciente primero</option>
+    <option value="tecnica">Técnica (A–Z)</option>
+    <option value="estado">Estado de conservación</option>
+  </select>
 </div>
 <p class="count" id="count"></p>
 <div class="grid" id="grid"></div>
@@ -156,13 +163,22 @@ function poblarFiltros(){
   });
 }
 
+const ESTADO_ORD={'Bueno':0,'Leve deterioro':1,'Marco dañado':2,'Manchas-humedad':3,'Necesita restauración':4};
 function render(){
   const q=document.getElementById('search').value.toLowerCase();
   const f=document.getElementById('filtroTec').value;
   const e=document.getElementById('filtroEst').value;
+  const ord=document.getElementById('orden').value;
   visible=data.filter(d=>
     (!q||d.titulo.toLowerCase().includes(q)||d.codigo.includes(q)||d.notas.toLowerCase().includes(q))&&
     (!f||d.tecnica===f)&&(!e||d.estado===e));
+  visible.sort((a,b)=>{
+    if(ord==='fecha_asc') return (parseInt(a.anio)||9999)-(parseInt(b.anio)||9999)||a.codigo.localeCompare(b.codigo);
+    if(ord==='fecha_desc') return (parseInt(b.anio)||0)-(parseInt(a.anio)||0)||a.codigo.localeCompare(b.codigo);
+    if(ord==='tecnica') return (a.tecnica||'').localeCompare(b.tecnica||'')||a.codigo.localeCompare(b.codigo);
+    if(ord==='estado') return (ESTADO_ORD[a.estado]??5)-(ESTADO_ORD[b.estado]??5)||a.codigo.localeCompare(b.codigo);
+    return a.codigo.localeCompare(b.codigo); // código (default)
+  });
   document.getElementById('count').textContent=visible.length+' obra(s)';
   const grid=document.getElementById('grid');
   grid.innerHTML='';
@@ -255,6 +271,7 @@ function nav(dir){abrir((cur+dir+visible.length)%visible.length);}
 document.getElementById('search').addEventListener('input',render);
 document.getElementById('filtroTec').addEventListener('change',render);
 document.getElementById('filtroEst').addEventListener('change',render);
+document.getElementById('orden').addEventListener('change',render);
 document.addEventListener('keydown',e=>{
   if(document.getElementById('overlay').style.display==='flex'){
     if(e.key==='Escape')cerrar();

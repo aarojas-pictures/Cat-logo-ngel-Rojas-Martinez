@@ -223,8 +223,16 @@ function abrir(i){
   const rn=document.getElementById('rowNotas');
   if(d.notas){document.getElementById('mNotas').textContent=d.notas;rn.style.display='';}else rn.style.display='none';
 
-  // fotos
-  fotosList=d.fotos;
+  // fotos — ordenadas: frontal → firma → det → desperfecto → reverso
+  function fotoOrden(f){
+    if(f.includes('_frontal'))    return 0;
+    if(f.includes('_firma'))      return 1;
+    if(f.includes('_det_'))       return 2;
+    if(f.includes('_desperfecto_')) return 3;
+    if(f.includes('_reverso'))    return 4;
+    return 5;
+  }
+  fotosList=[...d.fotos].sort((a,b)=>fotoOrden(a)-fotoOrden(b)||a.localeCompare(b));
   const th=document.getElementById('mThumbs');th.innerHTML='';
   const visor=document.getElementById('fotoVisor');
   const wrap=document.getElementById('thumbsWrap');

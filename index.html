@@ -172,12 +172,13 @@ function poblarFiltros(){
 
 const ESTADO_ORD={'Bueno':0,'Leve deterioro':1,'Marco dañado':2,'Manchas-humedad':3,'Necesita restauración':4};
 function render(){
-  const q=document.getElementById('search').value.toLowerCase();
+  const q=document.getElementById('search').value.toLowerCase().trim();
   const f=document.getElementById('filtroTec').value;
   const e=document.getElementById('filtroEst').value;
   const ord=document.getElementById('orden').value;
+  const tagQ=(d)=>(d.tags||[]).join(' ');
   visible=data.filter(d=>
-    (!q||d.titulo.toLowerCase().includes(q)||d.codigo.includes(q)||d.notas.toLowerCase().includes(q)||d.tags.some(t=>t.includes(q)))&&
+    (!q||d.titulo.toLowerCase().includes(q)||d.codigo.includes(q)||d.notas.toLowerCase().includes(q)||tagQ(d).includes(q))&&
     (!f||d.tecnica===f)&&(!e||d.estado===e));
   visible.sort((a,b)=>{
     if(ord==='fecha_asc') return (parseInt(a.anio)||9999)-(parseInt(b.anio)||9999)||a.codigo.localeCompare(b.codigo);
@@ -275,7 +276,9 @@ function abrir(i){
 function cerrar(){document.getElementById('overlay').style.display='none';}
 function nav(dir){abrir((cur+dir+visible.length)%visible.length);}
 
-document.getElementById('search').addEventListener('input',render);
+const searchEl=document.getElementById('search');
+searchEl.addEventListener('input',render);
+searchEl.addEventListener('compositionend',render);
 document.getElementById('filtroTec').addEventListener('change',render);
 document.getElementById('filtroEst').addEventListener('change',render);
 document.getElementById('orden').addEventListener('change',render);

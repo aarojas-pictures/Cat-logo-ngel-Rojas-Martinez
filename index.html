@@ -137,8 +137,14 @@ async function init(){
     complete:function(res){
       data=res.data.filter(r=>r['Codigo']||r['Código']).map(row=>{
         const codigo=pad(row['Codigo']||row['Código']);
-        const fotos=(manifest[codigo]||[]).map(f=>'fotos_web/'+f);
+        const fraw=manifest[codigo]||[];
+        const fotos=fraw.map(f=>'fotos_web/'+f);
         const cover=fotos.find(f=>f.includes('frontal'))||fotos[0]||null;
+        const tags=[];
+        if(fraw.some(f=>f.includes('_firma')))tags.push('firma');
+        if(fraw.some(f=>f.includes('_reverso')))tags.push('reverso');
+        if(fraw.some(f=>f.includes('_det_')))tags.push('detalle');
+        if(fraw.some(f=>f.includes('_desperfecto_')))tags.push('desperfecto');
         return{codigo,autor:row['Autor']||'',titulo:row['Título']||row['Titulo']||'Sin título',
           anio:row['Año']||row['Ano']||'',tecnica:row['Técnica / soporte']||row['Tecnica / soporte']||'',
           dim:dim(row['Alto obra (cm)'],row['Ancho obra (cm)'],row['Prof. obra (cm)']),
@@ -146,7 +152,7 @@ async function init(){
           marco:row['Con marco']||'',firma:row['Firma y fecha']||'',
           estado:row['Estado de conservación']||row['Estado de conservacion']||'',
           ubicacion:row['Ubicación actual']||row['Ubicacion actual']||'',
-          expo:row['Catálogo expo relacionado']||'',notas:row['Notas']||'',cover,fotos};
+          expo:row['Catálogo expo relacionado']||'',notas:row['Notas']||'',cover,fotos,tags};
       });
       poblarFiltros();
       document.getElementById('status').textContent='';
@@ -171,7 +177,7 @@ function render(){
   const e=document.getElementById('filtroEst').value;
   const ord=document.getElementById('orden').value;
   visible=data.filter(d=>
-    (!q||d.titulo.toLowerCase().includes(q)||d.codigo.includes(q)||d.notas.toLowerCase().includes(q))&&
+    (!q||d.titulo.toLowerCase().includes(q)||d.codigo.includes(q)||d.notas.toLowerCase().includes(q)||d.tags.some(t=>t.includes(q)))&&
     (!f||d.tecnica===f)&&(!e||d.estado===e));
   visible.sort((a,b)=>{
     if(ord==='fecha_asc') return (parseInt(a.anio)||9999)-(parseInt(b.anio)||9999)||a.codigo.localeCompare(b.codigo);

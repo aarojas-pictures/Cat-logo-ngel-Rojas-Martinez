@@ -184,7 +184,7 @@ function render(){
     if(ord==='fecha_asc') return (parseInt(a.anio)||9999)-(parseInt(b.anio)||9999)||a.codigo.localeCompare(b.codigo);
     if(ord==='fecha_desc') return (parseInt(b.anio)||0)-(parseInt(a.anio)||0)||a.codigo.localeCompare(b.codigo);
     if(ord==='tecnica') return (a.tecnica||'').localeCompare(b.tecnica||'')||a.codigo.localeCompare(b.codigo);
-    if(ord==='estado') return (ESTADO_ORD[a.estado]??5)-(ESTADO_ORD[b.estado]??5)||a.codigo.localeCompare(b.codigo);
+    if(ord==='estado') return (a.estado in ESTADO_ORD?ESTADO_ORD[a.estado]:5)-(b.estado in ESTADO_ORD?ESTADO_ORD[b.estado]:5)||a.codigo.localeCompare(b.codigo);
     return a.codigo.localeCompare(b.codigo); // código (default)
   });
   document.getElementById('count').textContent=visible.length+' obra(s)';
